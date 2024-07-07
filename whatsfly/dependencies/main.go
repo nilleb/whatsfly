@@ -207,6 +207,8 @@ func (w *WhatsAppClient) handler(rawEvt interface{}) {
 		// fmt.Println("3. Event type: Message")
 
 		var info string
+
+
 		info += "{\"id\":\"" + evt.Info.ID + "\""
 		info += ",\"messageSource\":\"" + evt.Info.MessageSource.SourceString() + "\""
 		if evt.Info.Type != "" {
@@ -222,6 +224,7 @@ func (w *WhatsAppClient) handler(rawEvt interface{}) {
 			info += ",\"mediaType\": \"" + evt.Info.MediaType + "\""
 		}
 		info += ",\"flags\":["
+
 
 		var flags []string
 		if evt.IsEphemeral {
@@ -242,55 +245,68 @@ func (w *WhatsAppClient) handler(rawEvt interface{}) {
 		info += strings.Join(flags, ",")
 		info += "]"
 
-		if len(w.mediaPath) > 0 {
-			var mimetype string
-			var media_path_subdir string
-			var data []byte
-			var err error
-			switch {
-			case evt.Message.ImageMessage != nil:
-				mimetype = evt.Message.ImageMessage.GetMimetype()
-				data, err = w.wpClient.Download(evt.Message.ImageMessage)
-				media_path_subdir = "images"
-			case evt.Message.AudioMessage != nil:
-				mimetype = evt.Message.AudioMessage.GetMimetype()
-				data, err = w.wpClient.Download(evt.Message.AudioMessage)
-				media_path_subdir = "audios"
-			case evt.Message.VideoMessage != nil:
-				mimetype = evt.Message.VideoMessage.GetMimetype()
-				data, err = w.wpClient.Download(evt.Message.VideoMessage)
-				media_path_subdir = "videos"
-			case evt.Message.DocumentMessage != nil:
-				mimetype = evt.Message.DocumentMessage.GetMimetype()
-				data, err = w.wpClient.Download(evt.Message.DocumentMessage)
-				media_path_subdir = "documents"
-			case evt.Message.StickerMessage != nil:
-				mimetype = evt.Message.StickerMessage.GetMimetype()
-				data, err = w.wpClient.Download(evt.Message.StickerMessage)
-				media_path_subdir = "stickers"
-			}
+        if evt.Message.ImageMessage != nil || evt.Message.AudioMessage != nil || evt.Message.VideoMessage != nil || evt.Message.DocumentMessage != nil || evt.Message.StickerMessage != nil {
+            if len(w.mediaPath) > 0 {
+                var mimetype string
+                var media_path_subdir string
+                var data []byte
+                var err error
+                switch {
+                case evt.Message.ImageMessage != nil:
+                    mimetype = evt.Message.ImageMessage.GetMimetype()
+                    data, err = w.wpClient.Download(evt.Message.ImageMessage)
+                    media_path_subdir = "images"
+                case evt.Message.AudioMessage != nil:
+                    mimetype = evt.Message.AudioMessage.GetMimetype()
+                    data, err = w.wpClient.Download(evt.Message.AudioMessage)
+                    media_path_subdir = "audios"
+                case evt.Message.VideoMessage != nil:
+                    mimetype = evt.Message.VideoMessage.GetMimetype()
+                    data, err = w.wpClient.Download(evt.Message.VideoMessage)
+                    media_path_subdir = "videos"
+                case evt.Message.DocumentMessage != nil:
+                    mimetype = evt.Message.DocumentMessage.GetMimetype()
+                    data, err = w.wpClient.Download(evt.Message.DocumentMessage)
+                    media_path_subdir = "documents"
+                case evt.Message.StickerMessage != nil:
+                    mimetype = evt.Message.StickerMessage.GetMimetype()
+                    data, err = w.wpClient.Download(evt.Message.StickerMessage)
+                    media_path_subdir = "stickers"
+                }
 
-			if err != nil {
-				fmt.Printf("Failed to download media: %v", err)
-			} else {
-				exts, _ := mime.ExtensionsByType(mimetype)
-				path := fmt.Sprintf("%s/%s/%s%s", w.mediaPath, media_path_subdir, evt.Info.ID, exts[0])
-				err = os.WriteFile(path, data, 0600)
-				if err != nil {
-					fmt.Printf("Failed to save media: %v", err)
-				} else {
-					info += ",\"filepath\":\"" + path + "\""
-				}
-			}
-		}
+
+
+                if err != nil {
+                    fmt.Printf("Failed to download media: %v", err)
+                } else {
+                    exts, _ := mime.ExtensionsByType(mimetype)
+                    path := fmt.Sprintf("%s/%s/%s%s", w.mediaPath, media_path_subdir, evt.Info.ID, exts[0])
+
+                    err = os.WriteFile(path, data, 0600)
+                    if err != nil {
+                        fmt.Printf("Failed to save media: %v", err)
+                    } else {
+                        info += ",\"filepath\":\"" + path + "\""
+                    }
+                }
+
+
+
+            }
+        }
 
 		info += "}"
+
+
 
 		var m, _ = protojson.Marshal(evt.Message)
 		var message_info string = string(m)
 		json_str := "{\"eventType\":\"Message\",\"info\":" + info + ",\"message\":" + message_info + "}"
 
 		w.addEventToQueue(json_str)
+
+
+
 	case *events.Receipt:
 		if evt.Type == types.ReceiptTypeRead || evt.Type == types.ReceiptTypeReadSelf {
 			json_str := "{\"eventType\":\"MessageRead\",\"messageIDs\":["
@@ -500,14 +516,179 @@ func (w *WhatsAppClient) SendImage(number string, imagePath string, caption stri
 
 	messageObj := &waProto.Message{ImageMessage: &waProto.ImageMessage{
 		Caption:       proto.String(caption),
-		Url:           proto.String(uploaded.URL),
+		Mimetype:      proto.String(http.DetectContentType(filedata)),
+
+		URL: &uploaded.URL,
 		DirectPath:    proto.String(uploaded.DirectPath),
 		MediaKey:      uploaded.MediaKey,
-		Mimetype:      proto.String(http.DetectContentType(filedata)),
-		FileEncSha256: uploaded.FileEncSHA256,
-		FileSha256:    uploaded.FileSHA256,
+		FileEncSHA256: uploaded.FileEncSHA256,
+		FileSHA256: uploaded.FileSHA256,
 		FileLength:    proto.Uint64(uint64(len(filedata))),
 	}}
+	_, err = w.wpClient.SendMessage(context.Background(), numberObj, messageObj)
+	if err != nil {
+		return 1
+	}
+	return 0
+}
+
+func (w *WhatsAppClient) SendVideo(number string, videoPath string, caption string, is_group bool) int {
+    numberObj := getJid(number, is_group)
+
+	// type imageStruct struct {
+	//     Phone       string
+	//     Image       string
+	//     Caption     string
+	//     Id          string
+	//     ContextInfo waProto.ContextInfo
+	// }
+	// Check if the client is connected
+
+	if !w.wpClient.IsConnected() {
+		err := w.wpClient.Connect()
+		if err != nil {
+			return 1
+		}
+	}
+
+	// var filedata []byte
+	filedata, err := os.ReadFile(videoPath)
+	if err != nil {
+		return 1
+	}
+
+
+	var uploaded whatsmeow.UploadResponse
+	uploaded, err = w.wpClient.Upload(context.Background(), filedata, whatsmeow.MediaVideo)
+	if err != nil {
+		return 1
+	}
+
+	// "data:image/png;base64,\""
+
+	messageObj := &waProto.Message{VideoMessage: &waProto.VideoMessage{
+		Caption:       proto.String(caption),
+		Mimetype:      proto.String(http.DetectContentType(filedata)),
+
+		URL: &uploaded.URL,
+		DirectPath:    proto.String(uploaded.DirectPath),
+		MediaKey:      uploaded.MediaKey,
+		FileEncSHA256: uploaded.FileEncSHA256,
+		FileSHA256: uploaded.FileSHA256,
+		FileLength:    proto.Uint64(uint64(len(filedata))),
+	}}
+
+
+	_, err = w.wpClient.SendMessage(context.Background(), numberObj, messageObj)
+	if err != nil {
+		return 1
+	}
+	return 0
+}
+
+func (w *WhatsAppClient) SendAudio(number string, audioPath string, is_group bool) int {
+    numberObj := getJid(number, is_group)
+
+	// type imageStruct struct {
+	//     Phone       string
+	//     Image       string
+	//     Caption     string
+	//     Id          string
+	//     ContextInfo waProto.ContextInfo
+	// }
+	// Check if the client is connected
+
+	if !w.wpClient.IsConnected() {
+		err := w.wpClient.Connect()
+		if err != nil {
+			return 1
+		}
+	}
+
+	// var filedata []byte
+	filedata, err := os.ReadFile(audioPath)
+	if err != nil {
+		return 1
+	}
+
+
+	var uploaded whatsmeow.UploadResponse
+	uploaded, err = w.wpClient.Upload(context.Background(), filedata, whatsmeow.MediaAudio)
+	if err != nil {
+		return 1
+	}
+
+
+
+	// "data:image/png;base64,\""
+
+	messageObj := &waProto.Message{AudioMessage: &waProto.AudioMessage{
+		Mimetype: proto.String("audio/ogg; codec=opus"),
+		URL: &uploaded.URL,
+		PTT: proto.Bool(true),
+		DirectPath:    proto.String(uploaded.DirectPath),
+		MediaKey:      uploaded.MediaKey,
+		FileEncSHA256: uploaded.FileEncSHA256,
+		FileSHA256: uploaded.FileSHA256,
+		FileLength:    proto.Uint64(uint64(len(filedata))),
+	}}
+
+
+
+	_, err = w.wpClient.SendMessage(context.Background(), numberObj, messageObj)
+	if err != nil {
+		return 1
+	}
+	return 0
+}
+
+func (w *WhatsAppClient) SendDocument(number string, documentPath string, caption string, is_group bool) int {
+    numberObj := getJid(number, is_group)
+
+	// type imageStruct struct {
+	//     Phone       string
+	//     Image       string
+	//     Caption     string
+	//     Id          string
+	//     ContextInfo waProto.ContextInfo
+	// }
+	// Check if the client is connected
+
+	if !w.wpClient.IsConnected() {
+		err := w.wpClient.Connect()
+		if err != nil {
+			return 1
+		}
+	}
+
+	// var filedata []byte
+	filedata, err := os.ReadFile(documentPath)
+	if err != nil {
+		return 1
+	}
+
+
+	var uploaded whatsmeow.UploadResponse
+	uploaded, err = w.wpClient.Upload(context.Background(), filedata, whatsmeow.MediaDocument)
+	if err != nil {
+		return 1
+	}
+
+	// "data:image/png;base64,\""
+
+	messageObj := &waProto.Message{DocumentMessage: &waProto.DocumentMessage{
+		Caption:       proto.String(caption),
+		Mimetype:      proto.String(http.DetectContentType(filedata)),
+
+		URL: &uploaded.URL,
+		DirectPath:    proto.String(uploaded.DirectPath),
+		MediaKey:      uploaded.MediaKey,
+		FileEncSHA256: uploaded.FileEncSHA256,
+		FileSHA256: uploaded.FileSHA256,
+		FileLength:    proto.Uint64(uint64(len(filedata))),
+	}}
+
+
 	_, err = w.wpClient.SendMessage(context.Background(), numberObj, messageObj)
 	if err != nil {
 		return 1
@@ -523,9 +704,11 @@ func NewWhatsAppClientWrapper(c_phone_number *C.char, c_media_path *C.char, fn_d
 	w := NewWhatsAppClient(phone_number, media_path, fn_disconnect_callback, fn_event_callback)
 	handles = append(handles, w)
 
-	// try fix run on google colab issue
-	C.free(unsafe.Pointer(c_phone_number))
-	C.free(unsafe.Pointer(c_media_path))
+
+   	// try fix run on google colab issue
+	//C.free(unsafe.Pointer(c_phone_number))
+	//C.free(unsafe.Pointer(c_media_path))
+
 
 	return C.int(len(handles) - 1)
 }
@@ -567,6 +750,38 @@ func SendImageWrapper(id C.int, c_phone_number *C.char, c_image_path *C.char, c_
 
 	w := handles[int(id)]
 	return C.int(w.SendImage(phone_number, image_path, caption, is_group))
+}
+
+//export SendVideoWrapper
+func SendVideoWrapper(id C.int, c_phone_number *C.char, c_video_path *C.char, c_caption *C.char, c_is_group C.bool) C.int {
+	phone_number := C.GoString(c_phone_number)
+	video_path := C.GoString(c_video_path)
+	caption := C.GoString(c_caption)
+	is_group := bool(c_is_group)
+
+	w := handles[int(id)]
+	return C.int(w.SendVideo(phone_number, video_path, caption, is_group))
+}
+
+//export SendAudioWrapper
+func SendAudioWrapper(id C.int, c_phone_number *C.char, c_audio_path *C.char, c_is_group C.bool) C.int {
+	phone_number := C.GoString(c_phone_number)
+	audio_path := C.GoString(c_audio_path)
+	is_group := bool(c_is_group)
+
+	w := handles[int(id)]
+	return C.int(w.SendAudio(phone_number, audio_path, is_group))
+}
+
+//export SendDocumentWrapper
+func SendDocumentWrapper(id C.int, c_phone_number *C.char, c_document_path *C.char, c_caption *C.char, c_is_group C.bool) C.int {
+	phone_number := C.GoString(c_phone_number)
+	document_path := C.GoString(c_document_path)
+	caption := C.GoString(c_caption)
+	is_group := bool(c_is_group)
+
+	w := handles[int(id)]
+	return C.int(w.SendDocument(phone_number, document_path, caption, is_group))
 }
 
 func main() {

@@ -27,9 +27,10 @@ if __name__ == "__main__":
 
     whatsapp = WhatsApp(event_callback=my_event_callback)
 
+    whatsapp.connect()
 
-    message_sent = whatsapp.send_message(phone=phone, message=message)
+    message_sent = whatsapp.sendMessage(phone=phone, message=message)
     
-    listening_message(time=5)
+    listening_message(5)
 
     whatsapp.disconnect()

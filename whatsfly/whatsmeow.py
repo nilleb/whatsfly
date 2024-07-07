@@ -2,7 +2,8 @@
 importing c shared whatsmeow library based on your machine.
 broken code will be fixed soon.
 """
-
+import logging
+import time
 from sys import platform
 from platform import machine
 import ctypes
@@ -25,6 +26,7 @@ else:
         file_ext = '-linux-amd64.so'
 
 root_dir = os.path.abspath(os.path.dirname(__file__))
+
 lib = ctypes.CDLL(f'{root_dir}/dependencies/whatsmeow/whatsmeow{file_ext}')
 
 new_whatsapp_client_wrapper = lib.NewWhatsAppClientWrapper
@@ -45,3 +47,12 @@ send_message_wrapper.argstype = [ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p,
 
 send_image_wrapper = lib.SendImageWrapper
 send_image_wrapper.argstype = [ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool]
+
+send_video_wrapper = lib.SendVideoWrapper
+send_video_wrapper.argstype = [ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool]
+
+send_audio_wrapper = lib.SendAudioWrapper
+send_audio_wrapper.argstype = [ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool]
+
+send_document_wrapper = lib.SendDocumentWrapper
+send_document_wrapper.argstype = [ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool]

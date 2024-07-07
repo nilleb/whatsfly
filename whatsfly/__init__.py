@@ -16,3 +16,4 @@ import logging
 from .whatsapp import WhatsApp
 
 LOGGER = logging.getLogger()
+logging.basicConfig(level=logging.INFO)

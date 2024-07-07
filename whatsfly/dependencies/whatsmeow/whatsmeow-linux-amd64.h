@@ -84,6 +84,9 @@ extern void DisconnectWrapper(int id);
 extern void MessageThreadWrapper(int id);
 extern int SendMessageWrapper(int id, char* c_phone_number, char* c_message, _Bool c_is_group);
 extern int SendImageWrapper(int id, char* c_phone_number, char* c_image_path, char* c_caption, _Bool c_is_group);
+extern int SendVideoWrapper(int id, char* c_phone_number, char* c_video_path, char* c_caption, _Bool c_is_group);
+extern int SendAudioWrapper(int id, char* c_phone_number, char* c_audio_path, _Bool c_is_group);
+extern int SendDocumentWrapper(int id, char* c_phone_number, char* c_document_path, char* c_caption, _Bool c_is_group);
 
 #ifdef __cplusplus
 }
