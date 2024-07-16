@@ -59,3 +59,49 @@ WhatsFly offers a streamlined and efficient way to integrate WhatsApp into your 
 | Set user status message | ⏳ |
 | React to messages | ⏳ |
 
+## Usage
+
+Here's a basic example to get you started with WhatsFly. This code demonstrates how to send a message and listen for incoming messages using WhatsFly.
+
+### Code
+
+```python
+from whatsfly import WhatsApp
+import time
+
+def my_event_callback(event_data):
+    ''' 
+    Simple event callback to listen to incoming events/messages. 
+    Whenever this function is called, it will retrieve the current incoming event or messages.
+    '''
+    print("Received event data:", event_data)
+
+if __name__ == "__main__":
+
+    phone = "6283139750000" # Make sure to attach country code + phone number
+    message = "Hello World!"
+
+    whatsapp = WhatsApp(event_callback=my_event_callback)
+
+    whatsapp.connect()
+
+    message_sent = whatsapp.sendMessage(phone=phone, message=message)
+    
+    time.sleep(5 * 60)  # Listen for messages for 5 minutes
+
+    whatsapp.disconnect()
+```
+
+### Explanation
+
+1. **Event Callback Function:**
+   - `my_event_callback(event_data)` handles incoming events and simply prints the event data to the console.
+
+2. **Main Program Flow:**
+   - The phone number (with country code) and the message to be sent are defined.
+   - An instance of `WhatsApp` is created with the event callback function.
+   - The script connects to WhatsApp using the `connect()` method. At this point it should show a QR code, scan it with your phone (on Connected Devices)
+   - A message is sent to the specified phone number using `sendMessage(phone, message)`.
+   - The script listens for incoming messages for 5 minutes using `time.sleep(5 * 60)`.
+   - Finally, it disconnects from WhatsApp using the `disconnect()` method.
+
