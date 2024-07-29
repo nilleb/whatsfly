@@ -1,7 +1,6 @@
 # most of the API refs are not mine, thanks to https://github.com/mukulhase/WebWhatsapp-Wrapper
 import os
 import re
-from builtins import function
 from typing import Optional
 from .whatsmeow import new_whatsapp_client_wrapper, connect_wrapper, disconnect_wrapper, message_thread_wrapper, send_message_wrapper, send_image_wrapper, send_video_wrapper, send_audio_wrapper, send_document_wrapper
 import ctypes
@@ -12,7 +11,7 @@ class WhatsApp():
     """
     The main whatsapp handler
     """
-    def __init__(self, phone_number: str = "", media_path: str = "", machine: str = "mac", browser: str = "safari", on_event: Optional[function] = None, on_disconnect: Optional[function] = None, oop_events = {}):
+    def __init__(self, phone_number: str = "", media_path: str = "", machine: str = "mac", browser: str = "safari", on_event = None, on_disconnect = None, oop_events = {}):
         """
         Import the compiled whatsmeow golang package, and setup basic client and database.
         Auto run based on any database (login and chat info database), hence a user phone number are declared.
