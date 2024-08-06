@@ -138,10 +138,11 @@ func (w *WhatsAppClient) Connect() {
 						}
 						w.eventQueue.Enqueue("{\"eventType\":\"linkCode\", \"code\": \"" + linkingCode + "\"}")
 						fmt.Println("Linking code:", linkingCode)
+					}else {
+                        w.eventQueue.Enqueue("{\"eventType\":\"qrCode\", \"code\": \"" + evt.Code + "\"}")
+					    qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+					    fmt.Println("QR code:", evt.Code)
 					}
-					w.eventQueue.Enqueue("{\"eventType\":\"qrCode\", \"code\": \"" + evt.Code + "\"}")
-					qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-					fmt.Println("QR code:", evt.Code)
 				} else {
 					fmt.Println("Login event:", evt.Event)
 				}
