@@ -2,9 +2,9 @@
 from setuptools import setup, find_packages
 from codecs import open
 from setuptools.command.install import install
-import os
 import subprocess
 import platform
+import os
 
 
 class BuildGoModule(install):
@@ -53,10 +53,10 @@ class BuildGoModule(install):
 
 setup(
     name="whatsfly",
-    version="0.1.0",
+    version="0.1.1",
     license="MIT",
-    author="Doy Bachtiar, Lab Fox, Ivo Bellin Salarin",
-    author_email="adityabachtiar996@gmail.com, labfoxdev@gmail.com, ivo@nilleb.com",
+    author="Doy Bachtiar, Otamay, David Arnold, LabFox, Ivo Bellin Salarin",
+    author_email="adityabachtiar996@gmail.com, mauricio@ulisse.io,  labfoxdev@gmail.com, ivo@nilleb.com",
     url="https://github.com/cloned-doy/whatsfly",
     keywords="whatsfly",
     description="WhatsApp on the fly.",
