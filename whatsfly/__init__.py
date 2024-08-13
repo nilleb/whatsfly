@@ -10,6 +10,7 @@ will make this wrapper easy to use without sacrificing speed and perfomances.
 """
 
 import logging
+from whatsapp import WhatsApp  # noqa: F401
 
 LOGGER = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
